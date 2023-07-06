@@ -1,5 +1,6 @@
 # skywatch
-App de previsão do tempo em React Native
+
+Skywatch is a weather app build with React Native.
 
 #
 <b>Preview</b><br/>
