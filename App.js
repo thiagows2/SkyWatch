@@ -7,9 +7,9 @@ import axios from "axios";
 import DropDownPicker from 'react-native-dropdown-picker';
 
 const apiCredentials = {
-  weather13: {
+  meteostat: {
     key: '',
-    host: 'open-weather13.p.rapidapi.com',
+    host: 'meteostat.p.rapidapi.com',
   },
   geoDB: {
     key: '',
@@ -24,29 +24,28 @@ export default function App() {
   const [openDropDown, setOpenDropDown] = useState(false);
   const [cityOptions, setCityOptions] = useState([]);
 
-  function convertToCelsius(fahrenheit) {
-    return (((fahrenheit - 32) * 5) / 9).toFixed(2);
-  }
-
   async function fetchWeather() {
     if (!city) return;
 
     setLoading(true);
-    const encodedCity = encodeURIComponent(city);
     const options = {
-      url: `https://open-weather13.p.rapidapi.com/city/${encodedCity}`,
+      url: `https://meteostat.p.rapidapi.com/point/monthly?lat=${city.lat}&lon=${city.lon}&start=2023-10-29&end=2023-10-30`,
       headers: {
-        "X-RapidAPI-Key": apiCredentials.weather13.key,
-        "X-RapidAPI-Host": apiCredentials.weather13.host,
-      },
+        "X-RapidAPI-Key": apiCredentials.meteostat.key,
+        "X-RapidAPI-Host": apiCredentials.meteostat.host,
+      }
     };
 
     try {
       const response = await axios.request(options);
+      const data = response.data.data[0];
+
       const weatherData = {
-        temperature: convertToCelsius(response.data.main.temp),
-        minTemperature: convertToCelsius(response.data.main.temp_min),
-        maxTemperature: convertToCelsius(response.data.main.temp_max),
+        temperature: data.tavg,
+        minTemperature: data.tmin,
+        maxTemperature: data.tmax,
+        precipitation: data.prcp,
+        windSpeed: data.wspd,
       }
 
       setWeather(weatherData);
@@ -59,7 +58,7 @@ export default function App() {
   function buildCityOptions(data) {
     if (!data) return [];
 
-    const options = data.map(city => ({ label: city.name, value: city.city }));
+    const options = data.map(city => ({ label: city.name, value: { name: city.city, lat: city.latitude, lon: city.longitude } }));
 
     return options.filter((option, index, self) =>
       index === self.findIndex((t) => (
@@ -98,6 +97,7 @@ export default function App() {
       <View style={styles.header}>
         <Feather name="sun" size={64} color="#FFC300" />
         <Text style={styles.title}>Previsão do Tempo</Text>
+        <Text style={styles.subtitle}>(mensal)</Text>
       </View>
 
       <Card style={styles.card}>
@@ -125,6 +125,8 @@ export default function App() {
             <Text style={styles.weatherText}>Temperatura: {weather.temperature} °C</Text>
             <Text style={styles.weatherText}>Mínima: {weather.minTemperature} °C</Text>
             <Text style={styles.weatherText}>Máxima: {weather.maxTemperature} °C</Text>
+            <Text style={styles.weatherText}>Precipitação: {weather.precipitation} mm</Text>
+            <Text style={styles.weatherText}>Velocidade do Vento: {weather.windSpeed} km/h</Text>
           </View>
         )}
       </Card>
@@ -145,6 +147,11 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
+    fontWeight: 'bold',
+    marginTop: 8,
+  },
+  subtitle: {
+    fontSize: 18,
     fontWeight: 'bold',
     marginTop: 8,
   },
